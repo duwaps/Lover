@@ -44,8 +44,7 @@ async def add_item(ctx, title: str, description: str, price: float):
     image_path = f"item_images/{image.filename}"
 
     # Save the image locally
-    image_file = await image.to_file()
-    image_file.save(image_path)
+    await image.save(image_path)
 
     # Generate a unique ID for the item
     items = load_items()
