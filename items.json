@@ -1,0 +1,13 @@
+{
+    "items": [
+        {
+            "id": 1,
+            "title": "Gaming Mouse",
+            "description": "High-quality gaming mouse",
+            "price": 50.0,
+            "image_url": "https://cdn.discordapp.com/attachments/1348364090455621775/1354191764243746928/cachedImage.png?ex=67e464dc&is=67e3135c&hm=ceb6825afdbba9cc0b6fcef7b1890c448183a38e68e738675d842c975a3f42b0&",
+            "seller": "starvej",
+            "image_path": "item_images/cachedImage.png"
+        }
+    ]
+}
