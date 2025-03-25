@@ -42,16 +42,17 @@ async def on_ready():
 @app_commands.describe(
     title="The title of your item",
     description="A description of your item",
-    price="The price of your item"
+    price="The price of your item",
+    attachment="The image of your item"
 )
-async def add_item(interaction: discord.Interaction, title: str, description: str, price: float):
-    # Check if the user attached an image
-    if not interaction.message.attachments:
-        await interaction.response.send_message("Please attach an image with your item.", ephemeral=True)
+async def add_item(interaction: discord.Interaction, title: str, description: str, price: float, attachment: discord.Attachment):
+    # Validate the attachment is an image
+    if not attachment.content_type.startswith('image/'):
+        await interaction.response.send_message("Please provide a valid image file.", ephemeral=True)
         return
 
-    # Get the first attached image
-    image = interaction.message.attachments[0]
+    # Use the provided attachment
+    image = attachment
     image_url = image.url
     image_path = f"item_images/{image.filename}"
 
