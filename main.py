@@ -119,5 +119,9 @@ async def remove_item(ctx, item_id: int):
     except StopIteration:
         await ctx.send("Item not found.")
 
-# Run the bot with your token (replace 'YOUR_TOKEN_HERE' with your actual token)
-bot.run('YOUR_TOKEN_HERE')
+# Run the bot with token from environment variable
+token = os.getenv('DISCORD_TOKEN')
+if not token:
+    print("Error: DISCORD_TOKEN not found in environment variables")
+    exit(1)
+bot.run(token)
