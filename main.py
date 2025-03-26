@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import json
 import os
-
+# love
 # Initialize the bot
 intents = discord.Intents.default()
 intents.message_content = True
