@@ -1,11 +1,20 @@
 {
     "items": [
         {
-            "id": 1,
-            "title": "Gaming Mouse",
-            "description": "High-quality gaming mouse",
-            "price": 50.0,
-            "image_url": "https://cdn.discordapp.com/attachments/1348364090455621775/1354191764243746928/cachedImage.png?ex=67e464dc&is=67e3135c&hm=ceb6825afdbba9cc0b6fcef7b1890c448183a38e68e738675d842c975a3f42b0&",
+            "id": 4,
+            "title": "27k Tiktok Shop",
+            "description": "US Organic & Full Access",
+            "price": 999.0,
+            "image_url": "https://cdn.discordapp.com/ephemeral-attachments/1354192116229734442/1354209189291098153/IMG_2082.gif?ex=67e47516&is=67e32396&hm=59d8f07bcdb6fb74944dea83c83d7b428c76ee2bc3ec3d2efa0199ba8fedf69c&",
+            "seller": "starvej",
+            "image_path": "item_images/IMG_2082.gif"
+        },
+        {
+            "id": 2,
+            "title": "# US TIKTOK SHOP ACCOUNT",
+            "description": "Organic & Full Access",
+            "price": 35.0,
+            "image_url": "https://cdn.discordapp.com/ephemeral-attachments/1354192116229734442/1354210806442492016/cachedImage.png?ex=67e47698&is=67e32518&hm=0ec9986bd14d42ffa447c8515cb1902e044ef5aeda38b0a4bbba85c71af29467&",
             "seller": "starvej",
             "image_path": "item_images/cachedImage.png"
         }

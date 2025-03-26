@@ -1,8 +1,6 @@
-
 import discord
 from discord.ext import commands
 from discord import app_commands
-from PIL import Image
 import json
 import os
 
@@ -34,6 +32,7 @@ async def on_ready():
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} command(s)")
+        await bot.change_presence(activity=discord.Game(name="Join discord.gg/boosttik for TikTok shop accounts"))
     except Exception as e:
         print(e)
 
@@ -46,20 +45,16 @@ async def on_ready():
     attachment="The image of your item"
 )
 async def add_item(interaction: discord.Interaction, title: str, description: str, price: float, attachment: discord.Attachment):
-    # Validate the attachment is an image
     if not attachment.content_type.startswith('image/'):
         await interaction.response.send_message("Please provide a valid image file.", ephemeral=True)
         return
 
-    # Use the provided attachment
     image = attachment
     image_url = image.url
     image_path = f"item_images/{image.filename}"
 
-    # Save the image locally
     await image.save(image_path)
 
-    # Generate a unique ID for the item
     items = load_items()
     item_id = len(items['items']) + 1
     new_item = {
@@ -75,13 +70,15 @@ async def add_item(interaction: discord.Interaction, title: str, description: st
     items['items'].append(new_item)
     save_items(items)
 
-    # Send a confirmation message
-    embed = discord.Embed(title="Item Added!", description=f"Item ID: {item_id}", color=discord.Color.green())
+    embed = discord.Embed(title="New Account!", description=f"Item ID: {item_id}", color=discord.Color.blue())
     embed.add_field(name="Title", value=title, inline=False)
     embed.add_field(name="Description", value=description, inline=False)
     embed.add_field(name="Price", value=f"${price}", inline=False)
     embed.set_image(url=image_url)
     await interaction.response.send_message(embed=embed)
+
+# Add this near the top of the file, after the imports
+user_purchase_cooldowns = {}
 
 @bot.tree.command(name='listitems', description='List all items in the marketplace')
 async def list_items(interaction: discord.Interaction):
@@ -90,32 +87,72 @@ async def list_items(interaction: discord.Interaction):
         await interaction.response.send_message("No items are currently available in the marketplace.", ephemeral=True)
         return
 
-    # Create an embed for each item
     await interaction.response.send_message("Here are the available items:", ephemeral=True)
     for item in items['items']:
         embed = discord.Embed(title=item['title'], description=item['description'], color=discord.Color.blue())
         embed.add_field(name="Price", value=f"${item['price']}", inline=False)
         embed.add_field(name="Seller", value=item['seller'], inline=False)
         embed.set_image(url=item['image_url'])
-        await interaction.followup.send(embed=embed)
 
-@bot.tree.command(name='search', description='Search for items by keyword')
-@app_commands.describe(keyword="The keyword to search for")
-async def search_items(interaction: discord.Interaction, keyword: str):
-    items = load_items()
-    found_items = [item for item in items['items'] if keyword.lower() in item['title'].lower() or keyword.lower() in item['description'].lower()]
+        button = discord.ui.Button(label="Purchase", style=discord.ButtonStyle.green, custom_id=f"purchase_{item['id']}")
 
-    if not found_items:
-        await interaction.response.send_message("No items found matching your search.", ephemeral=True)
-        return
+        async def button_callback(interaction: discord.Interaction, item_id=item['id']):  # Closure to capture item_id
+            # Check if user is on cooldown
+            current_time = discord.utils.utcnow()
+            user_id = interaction.user.id
 
-    await interaction.response.send_message(f"Found {len(found_items)} items matching '{keyword}':", ephemeral=True)
-    for item in found_items:
-        embed = discord.Embed(title=item['title'], description=item['description'], color=discord.Color.blue())
-        embed.add_field(name="Price", value=f"${item['price']}", inline=False)
-        embed.add_field(name="Seller", value=item['seller'], inline=False)
-        embed.set_image(url=item['image_url'])
-        await interaction.followup.send(embed=embed)
+            if user_id in user_purchase_cooldowns:
+                last_purchase_time = user_purchase_cooldowns[user_id].get(item_id)
+                if last_purchase_time:
+                    # 1 hour cooldown between purchases for the same item
+                    if (current_time - last_purchase_time).total_seconds() < 3600:
+                        await interaction.response.send_message(
+                            "You can only purchase this item once per hour. Please wait before trying again.", 
+                            ephemeral=True
+                        )
+                        return
+
+            # Create purchase channel
+            guild = interaction.guild
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.user: discord.PermissionOverwrite(read_messages=True)
+            }
+            purchase_channel = await guild.create_text_channel(f"purchase-{item_id}", overwrites=overwrites)
+
+            # Update cooldown tracking
+            if user_id not in user_purchase_cooldowns:
+                user_purchase_cooldowns[user_id] = {}
+            user_purchase_cooldowns[user_id][item_id] = current_time
+
+            # Create a view with a close channel button
+            close_view = discord.ui.View()
+            close_button = discord.ui.Button(label="Close Channel", style=discord.ButtonStyle.red, custom_id=f"close_channel_{purchase_channel.id}")
+
+            async def close_channel_callback(close_interaction: discord.Interaction):
+                # Check if the user has permissions to close the channel
+                if close_interaction.user.guild_permissions.manage_channels:
+                    await purchase_channel.delete()
+                else:
+                    await close_interaction.response.send_message("You don't have permission to close this channel.", ephemeral=True)
+
+            close_button.callback = close_channel_callback
+            close_view.add_item(close_button)
+
+            # Log who opened the private channel
+            log_channel = discord.utils.get(guild.text_channels, name="logs")
+            if log_channel:
+                await log_channel.send(f"{interaction.user.name} opened a private channel for item ID {item_id}.")
+
+            await purchase_channel.send(f"@everyone Please wait until staff replies.\nPayment Method:", view=close_view)
+            await interaction.response.send_message(f"Private channel created for item ID {item_id}.", ephemeral=True)
+
+        button.callback = button_callback
+
+        view = discord.ui.View()
+        view.add_item(button)
+
+        await interaction.followup.send(embed=embed, view=view)
 
 @bot.tree.command(name='removeitem', description='Remove an item from the marketplace')
 @app_commands.describe(item_id="The ID of the item to remove")
